@@ -1,104 +1,185 @@
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="es">
 
-<nav style="background-color: #333; padding: 10px;">
-    <a href="{{ url('/dashboard') }}" style="color: white; margin-right: 15px; text-decoration: none;">
-        Dashboard
-    </a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-    <a href="{{ url('/contact') }}" style="color: white; text-decoration: none;">
-        Contacto
-    </a>
-</nav>
+<body class="bg-dark text-light">
 
-<h1>Inventario</h1>
+    <nav class="navbar navbar-dark bg-black border-bottom border-secondary px-3">
+        <a class="navbar-brand fw-light" href="{{ url('/dashboard') }}">StockRest</a>
+        <div class="d-flex gap-3">
+            <a href="{{ url('/dashboard') }}" class="nav-link text-light">Dashboard</a>
+            <a href="{{ url('/contact') }}" class="nav-link text-secondary">Contacto</a>
+        </div>
+    </nav>
 
-<table class="table table-striped" border="1">
-    <tr>
-        <th>Nombre</th>
-        <th>Unidad</th>
-        <th>Stock</th>
-        <th>Mínimo</th>
-        <th>Fecha caducidad</th>
-    </tr>
+    <div class="container py-4">
 
-    @foreach($productos as $producto)
-        <tr>
-            <td>{{ $producto->nombre }}</td>
-            <td>{{ $producto->unidad }}</td>
-            <td>{{ $producto->stock_actual }}</td>
-            <td>{{ $producto->stock_minimo }}</td>
-            <td>
-                @foreach($producto->lotes->unique('fecha_caducidad') as $lote)
-                    <p>{{ $lote->fecha_caducidad }}</p>
-                @endforeach
-            </td>
-        </tr>
-    @endforeach
-</table>
+        <h1 class="fw-light mb-4">Inventario</h1>
 
-<h2>Crear Producto</h2>
+        <div class="table-responsive mb-5">
+            <table class="table table-dark table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-uppercase small text-secondary fw-normal">Nombre</th>
+                        <th class="text-uppercase small text-secondary fw-normal">Unidad</th>
+                        <th class="text-uppercase small text-secondary fw-normal">Stock</th>
+                        <th class="text-uppercase small text-secondary fw-normal">Mínimo</th>
+                        <th class="text-uppercase small text-secondary fw-normal">Fecha caducidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($productos as $producto)
+                        <tr>
+                            <td>{{ $producto->nombre }}</td>
+                            <td>{{ $producto->unidad }}</td>
+                            <td>{{ $producto->stock_actual }}</td>
+                            <td>{{ $producto->stock_minimo }}</td>
+                            <td>
+                                @foreach($producto->lotes->unique('fecha_caducidad') as $lote)
+                                    <span class="badge bg-secondary">{{ $lote->fecha_caducidad }}</span>
+                                @endforeach
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
-<form method="POST" action="/productos">
-    @csrf
+        <h2 class="fw-light mb-3">Crear Producto</h2>
+        <div class="card bg-black border-secondary mb-5">
+            <div class="card-body">
+                <form method="POST" action="/productos">
+                    @csrf
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label text-secondary small">Nombre</label>
+                            <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary"
+                                placeholder="Nombre" required>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label text-secondary small">Categoría</label>
+                            <input type="text" name="categoria" class="form-control bg-dark text-light border-secondary"
+                                placeholder="Categoría">
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label text-secondary small">Unidad</label>
+                            <input type="text" name="unidad" class="form-control bg-dark text-light border-secondary"
+                                placeholder="kg, piezas…" required>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <label class="form-label text-secondary small">Stock mínimo</label>
+                            <input type="number" name="stock_minimo"
+                                class="form-control bg-dark text-light border-secondary" placeholder="0" min="0"
+                                required>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-outline-light w-100">Crear</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <input type="text" name="nombre" placeholder="Nombre" required>
+        <h2 class="fw-light mb-3">Agregar Lote</h2>
+        <div class="card bg-black border-secondary mb-5">
+            <div class="card-body">
+                <form method="POST" action="/lotes">
+                    @csrf
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-6 col-md-4">
+                            <label class="form-label text-secondary small">Producto</label>
+                            <select name="producto_id" class="form-select bg-dark text-light border-secondary" required>
+                                @foreach($productos as $producto)
+                                    <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label text-secondary small">Cantidad</label>
+                            <input type="number" name="cantidad"
+                                class="form-control bg-dark text-light border-secondary" placeholder="Cantidad" min="1"
+                                required>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <label class="form-label text-secondary small">Fecha de caducidad</label>
+                            <input type="date" name="fecha_caducidad"
+                                class="form-control bg-dark text-light border-secondary" required>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <button type="submit" class="btn btn-outline-light w-100">Agregar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <input type="text" name="categoria" placeholder="Categoría">
+        <h2 class="fw-light mb-3">Consumir Producto</h2>
+        <div class="card bg-black border-secondary mb-5">
+            <div class="card-body">
+                <form action="/consumir" method="POST">
+                    @csrf
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-6 col-md-5">
+                            <label class="form-label text-secondary small">Producto</label>
+                            <select name="producto_id" class="form-select bg-dark text-light border-secondary" required>
+                                @foreach($productos as $producto)
+                                    <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-4">
+                            <label class="form-label text-secondary small">Cantidad</label>
+                            <input type="number" name="cantidad"
+                                class="form-control bg-dark text-light border-secondary" min="1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-light w-100">Consumir</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <input type="text" name="unidad" placeholder="Unidad (kg, piezas)" required>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card bg-black border-danger">
+                    <div class="card-header bg-transparent border-danger text-danger fw-light">
+                        ⚠️ Stock Bajo
+                    </div>
+                    <div class="card-body d-flex flex-wrap gap-2">
+                        @foreach($stock_bajo as $p)
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+                                {{ $p->nombre }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-black border-warning">
+                    <div class="card-header bg-transparent border-warning text-warning fw-light">
+                        ⏳ Por caducar
+                    </div>
+                    <div class="card-body d-flex flex-wrap gap-2">
+                        @foreach($por_caducar->unique('producto_id') as $lote)
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning">
+                                {{ $lote->producto->nombre }} — {{ $lote->fecha_caducidad }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <input type="number" name="stock_minimo" placeholder="Stock mínimo" min="0" required>
+    </div>
 
-    <button type="submit">Crear Producto</button>
-</form>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 
-<h2>Agregar Lote</h2>
-
-<form method="POST" action="/lotes">
-    @csrf
-
-    <label>Producto:</label>
-    <select name="producto_id" required>
-        @foreach($productos as $producto)
-            <option value="{{ $producto->id }}">
-                {{ $producto->nombre }}
-            </option>
-        @endforeach
-    </select>
-
-    <input type="number" name="cantidad" placeholder="Cantidad" min="1" required>
-
-    <input type="date" name="fecha_caducidad" required>
-
-    <button type="submit">Agregar Lote</button>
-</form>
-
-<h2>Consumir producto</h2>
-
-<form action="/consumir" method="POST">
-    @csrf
-
-    <label>Producto:</label>
-    <select name="producto_id" required>
-        @foreach($productos as $producto)
-            <option value="{{ $producto->id }}">
-                {{ $producto->nombre }}
-            </option>
-        @endforeach
-    </select>
-
-    <label>Cantidad:</label>
-    <input type="number" name="cantidad" min="1" required>
-
-    <button type="submit">Consumir</button>
-</form>
-
-<h2>⚠️ Stock Bajo</h2>
-@foreach($stock_bajo as $p)
-    <p>{{ $p->nombre }}</p>
-@endforeach
-
-<h2>⏳ Por caducar</h2>
-@foreach($por_caducar->unique('producto_id') as $lote)
-    <p>{{ $lote->producto->nombre }} - Caduca: {{ $lote->fecha_caducidad }}</p>
-@endforeach
+</html>

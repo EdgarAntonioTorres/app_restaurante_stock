@@ -13,23 +13,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('dashboard');
-});
-
 use App\Models\Producto;
 use App\Models\Lote;
-
-Route::get('/dashboard', function () {
-    $productos = Producto::with('lotes')->get();
-
-    $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
-
-    $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
-
-    return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar'));
-});
-
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\LoteController;
 
@@ -42,6 +27,16 @@ Route::apiResource('lotes', LoteController::class);
 Route::post('/consumir', [ProductoController::class, 'consumir']);
 Route::get('/alertas', [ProductoController::class, 'alertas']);
 
+Route::get('/dashboard', function () {
+    $productos = Producto::with('lotes')->get();
+
+    $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
+
+    $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
+
+    return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar'));
+})->name('dashboard');
+
 Route::get('/contact', function () {
     return view('contact');
-});
+})->name('contact');

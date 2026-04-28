@@ -1,0 +1,447 @@
+/* ============================================================
+   SISTEMA DE CONTROL DE STOCK — Stylesheet Principal
+   Estética: Luxury / Refined — Oscuro con acentos dorados
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+  --bg:         #0f1117;
+  --surface:    #181c27;
+  --surface-2:  #1f2436;
+  --border:     #2a3047;
+  --gold:       #c9a96e;
+  --gold-light: #e8c98a;
+  --gold-dim:   rgba(201, 169, 110, 0.15);
+  --text:       #e8e6e0;
+  --text-muted: #7a8099;
+  --danger:     #e05c5c;
+  --danger-dim: rgba(224, 92, 92, 0.12);
+  --success:    #5cb88a;
+  --radius:     6px;
+  --radius-lg:  12px;
+  --shadow:     0 4px 24px rgba(0,0,0,0.4);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.3);
+  --transition: 0.2s ease;
+}
+
+/* ── Reset & Base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  min-height: 100vh;
+  /* Grain overlay sutil */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ── Tipografía ─────────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.2; }
+h2 { font-size: clamp(1.2rem, 2.5vw, 1.7rem); color: var(--gold-light); margin-bottom: 1.25rem; }
+h3 { font-size: 1.1rem; }
+
+p { color: var(--text-muted); }
+
+/* ── Navegación ─────────────────────────────────────────────── */
+nav {
+  background-color: var(--surface) !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+nav::before {
+  content: '';
+  display: block;
+  width: 3px;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+nav a {
+  color: var(--text-muted) !important;
+  text-decoration: none !important;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: color var(--transition);
+}
+
+nav a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transition: transform var(--transition);
+}
+
+nav a:hover { color: var(--gold) !important; }
+nav a:hover::after { transform: scaleX(1); }
+
+/* Logo / marca opcional */
+nav .brand {
+  color: var(--gold) !important;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  margin-right: auto;
+  padding-left: 1.5rem;
+}
+
+/* ── Layout Principal ───────────────────────────────────────── */
+.page-wrapper,
+body > *:not(nav) {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+/* Para páginas sin wrapper explícito */
+body > h1:first-of-type,
+body > h2,
+body > table,
+body > form {
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* ── Secciones / Cards ──────────────────────────────────────── */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition);
+}
+
+.section:hover { border-color: rgba(201, 169, 110, 0.3); }
+
+.section h2 {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+/* ── Header (contact page) ──────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  margin-bottom: 1.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,169,110,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+header h1 {
+  color: var(--gold-light);
+  margin-bottom: 0.5rem;
+}
+
+header p { color: var(--text-muted); font-size: 0.95rem; }
+
+/* ── Tabla ──────────────────────────────────────────────────── */
+.table,
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.table th,
+table th {
+  background: var(--surface-2);
+  color: var(--gold);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td,
+table td {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-child(even),
+table.table-striped tr:nth-child(even) {
+  background: rgba(255,255,255,0.02);
+}
+
+table tr:last-child td { border-bottom: none; }
+
+table tr:hover td {
+  background: var(--gold-dim);
+  transition: background var(--transition);
+}
+
+table td p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+
+/* ── Formularios ────────────────────────────────────────────── */
+form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  box-shadow: var(--shadow-sm);
+}
+
+form h2 { flex: 0 0 100%; }
+
+label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  min-width: 160px;
+}
+
+input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+input:focus,
+select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,169,110,0.12);
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8099' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+/* ── Botones ────────────────────────────────────────────────── */
+button[type="submit"],
+.btn-primary {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+}
+
+button[type="submit"]:hover {
+  background: var(--gold);
+  color: var(--bg);
+  box-shadow: 0 0 16px rgba(201,169,110,0.3);
+}
+
+/* ── Alertas: Stock Bajo y Por Caducar ──────────────────────── */
+.alert-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Stock Bajo */
+.stock-bajo-item,
+h2 + p,
+h2[class*="bajo"] + p {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--danger-dim);
+  border: 1px solid rgba(224, 92, 92, 0.25);
+  color: var(--danger);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+}
+
+/* Por Caducar */
+.caducar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(201,169,110,0.08);
+  border: 1px solid rgba(201,169,110,0.2);
+  color: var(--gold-light);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+}
+
+/* ── Equipo (contact page) ──────────────────────────────────── */
+.team-list {
+  list-style: none !important;
+  padding: 0 !important;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.team-list li {
+  background: var(--bg) !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem !important;
+  font-weight: 400 !important;
+  color: var(--text);
+  font-size: 0.88rem;
+  transition: border-color var(--transition);
+}
+
+.team-list li:hover { border-color: rgba(201,169,110,0.4); }
+
+/* ── Listas generales ───────────────────────────────────────── */
+ul:not(.team-list) {
+  padding-left: 0;
+  list-style: none;
+}
+
+ul:not(.team-list) li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+ul:not(.team-list) li:last-child { border-bottom: none; }
+
+ul:not(.team-list) li::before {
+  content: '—';
+  color: var(--gold);
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  margin-top: 0.05rem;
+}
+
+ul:not(.team-list) li strong { color: var(--text); font-weight: 500; }
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ── Tech stack italic ──────────────────────────────────────── */
+.tech-stack { color: var(--text-muted) !important; font-style: normal !important; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .team-list { grid-template-columns: 1fr; }
+  form { flex-direction: column; }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select { min-width: 100%; width: 100%; }
+  table { font-size: 0.8rem; }
+  table th, table td { padding: 0.65rem 0.75rem; }
+}
+
+/* ── Animación de entrada ───────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.section,
+form,
+table,
+header {
+  animation: fadeUp 0.4s ease both;
+}
+
+.section:nth-child(2) { animation-delay: 0.05s; }
+.section:nth-child(3) { animation-delay: 0.10s; }
+.section:nth-child(4) { animation-delay: 0.15s; }
+.section:nth-child(5) { animation-delay: 0.20s; }
