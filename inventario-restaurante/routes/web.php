@@ -1,46 +1,43 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
 use App\Models\Producto;
 use App\Models\Lote;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\LoteController;
+use App\Http\Controllers\AuthController;
 
-Route::post('/productos', [ProductoController::class, 'store']);
-Route::post('/lotes', [LoteController::class, 'store']);
+// ── Auth ──────────────────────────────────────────────
+Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout',[AuthController::class, 'logout'])->name('logout');
 
-Route::apiResource('productos', ProductoController::class);
-Route::apiResource('lotes', LoteController::class);
+// ── Rutas protegidas ──────────────────────────────────
+Route::middleware('auth')->group(function () {
 
-Route::post('/consumir', [ProductoController::class, 'consumir']);
-Route::get('/alertas', [ProductoController::class, 'alertas']);
+    Route::get('/', fn() => redirect()->route('dashboard'));
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
+    // Dashboard — todos los roles autenticados
+    Route::get('/dashboard', function () {
+        $productos   = Producto::with('lotes')->get();
+        $stock_bajo  = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
+        $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
+        return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar'));
+    })->name('dashboard');
+
+    Route::get('/contact', fn() => view('contact'))->name('contact');
+
+    // Crear producto — solo administrador
+    Route::post('/productos', [ProductoController::class, 'store'])
+         ->middleware('rol:administrador');
+
+    // Agregar lote — administrador y gerente
+    Route::post('/lotes', [LoteController::class, 'store'])
+         ->middleware('rol:administrador,gerente');
+
+    // Consumir — administrador, gerente y cocinero
+    Route::post('/consumir', [ProductoController::class, 'consumir'])
+         ->middleware('rol:administrador,gerente,cocinero');
+
+    Route::get('/alertas', [ProductoController::class, 'alertas']);
 });
-
-Route::get('/dashboard', function () {
-    $productos = Producto::with('lotes')->get();
-
-    $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
-
-    $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
-
-    return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar'));
-})->name('dashboard');
-
-Route::get('/contact', function () {
-    return view('contact');
-})->name('contact');
