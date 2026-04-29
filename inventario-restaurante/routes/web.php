@@ -27,6 +27,10 @@ Route::apiResource('lotes', LoteController::class);
 Route::post('/consumir', [ProductoController::class, 'consumir']);
 Route::get('/alertas', [ProductoController::class, 'alertas']);
 
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
+
 Route::get('/dashboard', function () {
     $productos = Producto::with('lotes')->get();
 
