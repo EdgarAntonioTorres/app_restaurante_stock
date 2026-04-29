@@ -18,6 +18,9 @@
             </span>
             <a href="{{ url('/dashboard') }}" class="nav-link text-light">Dashboard</a>
             <a href="{{ url('/contact') }}" class="nav-link text-secondary">Contacto</a>
+            @if(auth()->user()->rol === 'administrador')
+                <a href="{{ url('/usuarios') }}" class="nav-link text-secondary">Usuarios</a>
+            @endif
             <form method="POST" action="/logout" class="mb-0">
                 @csrf
                 <button class="btn btn-sm btn-outline-secondary">Salir</button>
@@ -58,8 +61,8 @@
             </table>
         </div>
 
-        {{-- Crear Producto: solo administrador --}}
-        @if(auth()->user()->rol === 'administrador')
+        {{-- Crear Producto: administrador y gerente --}}
+        @if(in_array(auth()->user()->rol, ['administrador', 'gerente']))
             <h2 class="fw-light mb-3">Crear Producto</h2>
             <div class="card bg-black border-secondary mb-5">
                 <div class="card-body">
