@@ -12,9 +12,19 @@
 
     <nav class="navbar navbar-dark bg-black border-bottom border-secondary px-3">
         <a class="navbar-brand fw-light" href="{{ url('/dashboard') }}">StockRest</a>
-        <div class="d-flex gap-3">
+        <div class="d-flex gap-3 align-items-center">
+            <span class="text-secondary small">{{ auth()->user()->name }}
+                <span class="badge bg-secondary ms-1">{{ auth()->user()->rol }}</span>
+            </span>
             <a href="{{ url('/dashboard') }}" class="nav-link text-light">Dashboard</a>
             <a href="{{ url('/contact') }}" class="nav-link text-secondary">Contacto</a>
+            @if(auth()->user()->rol === 'administrador')
+                <a href="{{ url('/usuarios') }}" class="nav-link text-secondary">Usuarios</a>
+            @endif
+            <form method="POST" action="/logout" class="mb-0">
+                @csrf
+                <button class="btn btn-sm btn-outline-secondary">Salir</button>
+            </form>
         </div>
     </nav>
 
@@ -51,74 +61,81 @@
             </table>
         </div>
 
-        <h2 class="fw-light mb-3">Crear Producto</h2>
-        <div class="card bg-black border-secondary mb-5">
-            <div class="card-body">
-                <form method="POST" action="/productos">
-                    @csrf
-                    <div class="row g-3 align-items-end">
-                        <div class="col-sm-6 col-md-3">
-                            <label class="form-label text-secondary small">Nombre</label>
-                            <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary"
-                                placeholder="Nombre" required>
+        {{-- Crear Producto: administrador y gerente --}}
+        @if(in_array(auth()->user()->rol, ['administrador', 'gerente']))
+            <h2 class="fw-light mb-3">Crear Producto</h2>
+            <div class="card bg-black border-secondary mb-5">
+                <div class="card-body">
+                    <form method="POST" action="/productos">
+                        @csrf
+                        <div class="row g-3 align-items-end">
+                            <div class="col-sm-6 col-md-3">
+                                <label class="form-label text-secondary small">Nombre</label>
+                                <input type="text" name="nombre" class="form-control bg-dark text-light border-secondary"
+                                    placeholder="Nombre" required>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label class="form-label text-secondary small">Categoría</label>
+                                <input type="text" name="categoria" class="form-control bg-dark text-light border-secondary"
+                                    placeholder="Categoría">
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label class="form-label text-secondary small">Unidad</label>
+                                <input type="text" name="unidad" class="form-control bg-dark text-light border-secondary"
+                                    placeholder="kg, piezas…" required>
+                            </div>
+                            <div class="col-sm-6 col-md-2">
+                                <label class="form-label text-secondary small">Stock mínimo</label>
+                                <input type="number" name="stock_minimo"
+                                    class="form-control bg-dark text-light border-secondary" placeholder="0" min="0"
+                                    required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-outline-light w-100">Crear</button>
+                            </div>
                         </div>
-                        <div class="col-sm-6 col-md-3">
-                            <label class="form-label text-secondary small">Categoría</label>
-                            <input type="text" name="categoria" class="form-control bg-dark text-light border-secondary"
-                                placeholder="Categoría">
-                        </div>
-                        <div class="col-sm-6 col-md-3">
-                            <label class="form-label text-secondary small">Unidad</label>
-                            <input type="text" name="unidad" class="form-control bg-dark text-light border-secondary"
-                                placeholder="kg, piezas…" required>
-                        </div>
-                        <div class="col-sm-6 col-md-2">
-                            <label class="form-label text-secondary small">Stock mínimo</label>
-                            <input type="number" name="stock_minimo"
-                                class="form-control bg-dark text-light border-secondary" placeholder="0" min="0"
-                                required>
-                        </div>
-                        <div class="col-md-1">
-                            <button type="submit" class="btn btn-outline-light w-100">Crear</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+        @endif
 
-        <h2 class="fw-light mb-3">Agregar Lote</h2>
-        <div class="card bg-black border-secondary mb-5">
-            <div class="card-body">
-                <form method="POST" action="/lotes">
-                    @csrf
-                    <div class="row g-3 align-items-end">
-                        <div class="col-sm-6 col-md-4">
-                            <label class="form-label text-secondary small">Producto</label>
-                            <select name="producto_id" class="form-select bg-dark text-light border-secondary" required>
-                                @foreach($productos as $producto)
-                                    <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
-                                @endforeach
-                            </select>
+        {{-- Agregar Lote: administrador y gerente --}}
+        @if(in_array(auth()->user()->rol, ['administrador', 'gerente']))
+            <h2 class="fw-light mb-3">Agregar Lote</h2>
+            <div class="card bg-black border-secondary mb-5">
+                <div class="card-body">
+                    <form method="POST" action="/lotes">
+                        @csrf
+                        <div class="row g-3 align-items-end">
+                            <div class="col-sm-6 col-md-4">
+                                <label class="form-label text-secondary small">Producto</label>
+                                <select name="producto_id" class="form-select bg-dark text-light border-secondary" required>
+                                    @foreach($productos as $producto)
+                                        <option value="{{ $producto->id }}">{{ $producto->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label class="form-label text-secondary small">Cantidad</label>
+                                <input type="number" name="cantidad"
+                                    class="form-control bg-dark text-light border-secondary" placeholder="Cantidad" min="1"
+                                    required>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label class="form-label text-secondary small">Fecha de caducidad</label>
+                                <input type="date" name="fecha_caducidad"
+                                    class="form-control bg-dark text-light border-secondary" required>
+                            </div>
+                            <div class="col-sm-6 col-md-2">
+                                <button type="submit" class="btn btn-outline-light w-100">Agregar</button>
+                            </div>
                         </div>
-                        <div class="col-sm-6 col-md-3">
-                            <label class="form-label text-secondary small">Cantidad</label>
-                            <input type="number" name="cantidad"
-                                class="form-control bg-dark text-light border-secondary" placeholder="Cantidad" min="1"
-                                required>
-                        </div>
-                        <div class="col-sm-6 col-md-3">
-                            <label class="form-label text-secondary small">Fecha de caducidad</label>
-                            <input type="date" name="fecha_caducidad"
-                                class="form-control bg-dark text-light border-secondary" required>
-                        </div>
-                        <div class="col-sm-6 col-md-2">
-                            <button type="submit" class="btn btn-outline-light w-100">Agregar</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+        @endif
 
+        {{-- Consumir: todos --}}
         <h2 class="fw-light mb-3">Consumir Producto</h2>
         <div class="card bg-black border-secondary mb-5">
             <div class="card-body">
