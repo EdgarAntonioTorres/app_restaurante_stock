@@ -11,10 +11,16 @@ class Movimiento extends Model
 
     protected $fillable = [
         'producto_id',
+        'user_id', // Asegúrate de que esté en el fillable
         'tipo',
-        'cantidad',
-        'descripcion'
+        'cantidad'
     ];
+
+    // --- ESTO ES LO QUE FALTA ---
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function producto()
     {

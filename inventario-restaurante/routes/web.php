@@ -18,20 +18,25 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', fn() => redirect()->route('dashboard'));
 
-    // Dashboard — todos los roles autenticados
-    Route::get('/dashboard', function () {
-        $productos = Producto::with('lotes')->get();
-        $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
-        $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
-        return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar'));
-    })->name('dashboard');
+    // --- ACTUALIZADO: Ahora apunta al Controlador para que envíe $historial y $consumoDiario ---
+    Route::get('/dashboard', [ProductoController::class, 'index'])->name('dashboard');
 
     Route::get('/contact', fn() => view('contact'))->name('contact');
 
-    // Crear producto — solo administrador
+    // ── Productos ──────────────────────────────────────
+    // Crear producto
     Route::post('/productos', [ProductoController::class, 'store'])
         ->middleware('rol:administrador,gerente');
 
+    // Editar producto (Actualizar)
+    Route::put('/productos/{id}', [ProductoController::class, 'update'])
+        ->middleware('rol:administrador,gerente');
+
+    // Eliminar producto
+    Route::delete('/productos/{id}', [ProductoController::class, 'destroy'])
+        ->middleware('rol:administrador,gerente');
+
+    // ── Lotes y Consumo ────────────────────────────────
     // Agregar lote — administrador y gerente
     Route::post('/lotes', [LoteController::class, 'store'])
         ->middleware('rol:administrador,gerente');
@@ -44,6 +49,8 @@ Route::middleware('auth')->group(function () {
 });
 
 // Gestión de usuarios — solo administrador
-Route::get('/usuarios', [UserController::class, 'index'])->middleware('rol:administrador');
-Route::post('/usuarios', [UserController::class, 'store'])->middleware('rol:administrador');
-Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->middleware('rol:administrador');
+Route::middleware(['auth', 'rol:administrador'])->group(function () {
+    Route::get('/usuarios', [UserController::class, 'index']);
+    Route::post('/usuarios', [UserController::class, 'store']);
+    Route::delete('/usuarios/{user}', [UserController::class, 'destroy']);
+});
