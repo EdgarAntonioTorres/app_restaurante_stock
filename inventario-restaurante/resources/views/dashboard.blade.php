@@ -317,6 +317,63 @@
         </div>
 
         {{-- ============================================================ --}}
+        {{-- SECCIÓN 4B: CONSUMO POR CATEGORÍA Y POR PRODUCTO --}}
+        {{-- ============================================================ --}}
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6">
+                <div class="card bg-black border-secondary h-100">
+                    <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
+                        Consumo por Categoría (Últimos 7 días)
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartConsumoCategoria" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card bg-black border-secondary h-100">
+                    <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
+                        Top 10 Productos más Consumidos (Últimos 7 días)
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartConsumoProducto" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================ --}}
+        {{-- SECCIÓN 4C: CONSUMO INDIVIDUAL POR PRODUCTO --}}
+        {{-- ============================================================ --}}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card bg-black border-secondary">
+                    <div
+                        class="card-header bg-transparent border-secondary d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <span class="text-secondary small text-uppercase">Historial de Consumo por Producto</span>
+                        <select id="selectorProducto"
+                            class="form-select form-select-sm bg-dark text-light border-secondary"
+                            style="max-width: 260px;">
+                            @foreach($productos as $producto)
+                                <option value="{{ $producto->id }}" data-nombre="{{ $producto->nombre }}"
+                                    data-unidad="{{ $producto->unidad }}">
+                                    {{ $producto->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartProductoIndividual" style="max-height: 260px;"></canvas>
+                        <p id="sinDatosMsg" class="text-secondary text-center small mt-3 d-none">
+                            Sin movimientos de salida en los últimos 30 días para este producto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================ --}}
         {{-- SECCIÓN 5: KARDEX DE MOVIMIENTOS --}}
         {{-- ============================================================ --}}
 
@@ -458,6 +515,137 @@
                         x: { grid: { display: false }, ticks: { color: '#6c757d' } }
                     }
                 }
+            });
+
+            // ── Consumo por Categoría (Líneas múltiples) ──────────────────────
+            const rawCategoria = @json($consumoPorCategoria);
+
+            const fechasSet = [...new Set(rawCategoria.map(d => d.fecha))].sort();
+            const categoriasSet = [...new Set(rawCategoria.map(d => d.categoria))];
+
+            const paletaCat = [
+                { border: '#0d6efd', bg: 'rgba(13,110,253,0.12)' },
+                { border: '#20c997', bg: 'rgba(32,201,151,0.12)' },
+                { border: '#d621a0', bg: 'rgba(214,33,160,0.12)' },
+                { border: '#ffc107', bg: 'rgba(255,193,7,0.12)' },
+                { border: '#6610f2', bg: 'rgba(102,16,242,0.12)' },
+                { border: '#fd7e14', bg: 'rgba(253,126,20,0.12)' },
+            ];
+
+            const datasetsCat = categoriasSet.map((cat, i) => {
+                const c = paletaCat[i % paletaCat.length];
+                return {
+                    label: cat,
+                    data: fechasSet.map(fecha => {
+                        const row = rawCategoria.find(d => d.fecha === fecha && d.categoria === cat);
+                        return row ? row.total : 0;
+                    }),
+                    borderColor: c.border,
+                    backgroundColor: c.bg,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: c.border,
+                };
+            });
+
+            new Chart(document.getElementById('chartConsumoCategoria'), {
+                type: 'line',
+                data: { labels: fechasSet, datasets: datasetsCat },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#2d2d2d' }, ticks: { color: '#6c757d' } },
+                        x: { grid: { display: false }, ticks: { color: '#6c757d' } }
+                    }
+                }
+            });
+
+            // ── Top 10 Productos más Consumidos (Barras horizontales) ─────────
+            const rawProducto = @json($consumoPorProducto);
+
+            new Chart(document.getElementById('chartConsumoProducto'), {
+                type: 'bar',
+                data: {
+                    labels: rawProducto.map(p => `${p.nombre} (${p.unidad})`),
+                    datasets: [{
+                        label: 'Cantidad consumida',
+                        data: rawProducto.map(p => p.total),
+                        backgroundColor: 'rgba(13,110,253,0.4)',
+                        borderColor: '#0d6efd',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#2d2d2d' }, ticks: { color: '#6c757d' } },
+                        y: { grid: { display: false }, ticks: { color: '#adb5bd', font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // ── Consumo individual por producto (últimos 30 días) ─────────────
+            const todosMovimientos = @json($consumoIndividual);
+
+            const ctxIndividual = document.getElementById('chartProductoIndividual');
+            let chartIndividual = null;
+
+            function renderChartIndividual(productoId, nombre, unidad) {
+                const datos = todosMovimientos.filter(m => m.producto_id == productoId);
+                const sinDatos = document.getElementById('sinDatosMsg');
+
+                if (datos.length === 0) {
+                    sinDatos.classList.remove('d-none');
+                    if (chartIndividual) { chartIndividual.destroy(); chartIndividual = null; }
+                    return;
+                }
+
+                sinDatos.classList.add('d-none');
+
+                const labels = datos.map(d => d.fecha);
+                const valores = datos.map(d => d.total);
+
+                if (chartIndividual) chartIndividual.destroy();
+
+                chartIndividual = new Chart(ctxIndividual, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: `${nombre} (${unidad})`,
+                            data: valores,
+                            backgroundColor: 'rgba(13,110,253,0.45)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#2d2d2d' }, ticks: { color: '#6c757d' } },
+                            x: { grid: { display: false }, ticks: { color: '#6c757d' } }
+                        }
+                    }
+                });
+            }
+
+            const selector = document.getElementById('selectorProducto');
+
+            // Render inicial con el primer producto
+            const primerOpt = selector.options[0];
+            if (primerOpt) {
+                renderChartIndividual(primerOpt.value, primerOpt.dataset.nombre, primerOpt.dataset.unidad);
+            }
+
+            // Actualizar al cambiar selección
+            selector.addEventListener('change', function () {
+                const opt = this.options[this.selectedIndex];
+                renderChartIndividual(opt.value, opt.dataset.nombre, opt.dataset.unidad);
             });
         });
     </script>
