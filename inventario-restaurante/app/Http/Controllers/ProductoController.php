@@ -10,22 +10,17 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $productos = Producto::with('lotes')->get();
         $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
         $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
 
-        // --- NUEVO: Datos para el Kardex (Historial) ---
         $historial = Movimiento::with(['producto', 'user'])
             ->orderBy('created_at', 'desc')
             ->take(15)
             ->get();
 
-        // --- NUEVO: Datos para la Gráfica de Consumo (Últimos 7 días) ---
         $consumoDiario = Movimiento::where('tipo', 'salida')
             ->where('created_at', '>=', now()->subDays(7))
             ->selectRaw('DATE(created_at) as fecha, SUM(cantidad) as total')
@@ -36,46 +31,28 @@ class ProductoController extends Controller
         return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar', 'historial', 'consumoDiario'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $producto = Producto::create($request->all());
+        Producto::create($request->all());
         return redirect('/dashboard')->with('success', 'Producto creado');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Producto $producto)
     {
-        //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Producto $producto)
     {
-        //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
-        
+
         $producto->update([
             'nombre' => $request->nombre,
             'categoria' => $request->categoria,
@@ -86,14 +63,9 @@ class ProductoController extends Controller
         return redirect('/dashboard')->with('success', 'Producto actualizado con éxito');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $producto = Producto::findOrFail($id);
-
-        // Opcional: Eliminar lotes y movimientos asociados antes de borrar el producto
         $producto->lotes()->delete();
         $producto->delete();
 
@@ -102,38 +74,53 @@ class ProductoController extends Controller
 
     public function consumir(Request $request)
     {
-        $cantidad = $request->cantidad;
+        $request->validate([
+            'producto_id' => 'required|exists:productos,id',
+            'cantidad' => 'required|integer|min:1',
+        ]);
 
-        $lotes = Lote::where('producto_id', $request->producto_id)
+        $producto = Producto::findOrFail($request->producto_id);
+        $cantidad = (int) $request->cantidad;
+
+        // ── Validación: no permitir stock negativo ──────────────────────
+        if ($cantidad > $producto->stock_actual) {
+            return redirect('/dashboard')->with(
+                'error',
+                "Stock insuficiente. Solo hay {$producto->stock_actual} {$producto->unidad} disponibles de \"{$producto->nombre}\"."
+            );
+        }
+
+        // ── Consumo FIFO por lotes (del más próximo a caducar) ──────────
+        $restante = $cantidad;
+        $lotes = Lote::where('producto_id', $producto->id)
             ->orderBy('fecha_caducidad', 'asc')
             ->get();
 
         foreach ($lotes as $lote) {
-            if ($cantidad <= 0)
+            if ($restante <= 0)
                 break;
 
-            if ($lote->cantidad <= $cantidad) {
-                $cantidad -= $lote->cantidad;
+            if ($lote->cantidad <= $restante) {
+                $restante -= $lote->cantidad;
                 $lote->delete();
             } else {
-                $lote->cantidad -= $cantidad;
+                $lote->cantidad -= $restante;
                 $lote->save();
-                $cantidad = 0;
+                $restante = 0;
             }
         }
 
-        $producto = Producto::find($request->producto_id);
-        $producto->stock_actual -= $request->cantidad;
+        // ── Actualizar stock del producto ───────────────────────────────
+        $producto->stock_actual -= $cantidad;
         $producto->save();
 
-        // --- ACTUALIZADO: Se agrega user_id para el Kardex ---
-        // En el método consumir()
-Movimiento::create([
-    'producto_id' => $producto->id,
-    // 'user_id' => Auth::id(),  <-- COMENTA O BORRA ESTA LÍNEA
-    'tipo' => 'salida',
-    'cantidad' => $request->cantidad
-]);
+        // ── Registrar movimiento con el usuario autenticado ─────────────
+        Movimiento::create([
+            'producto_id' => $producto->id,
+            'user_id' => Auth::id(),   // ← guarda quién consumió
+            'tipo' => 'salida',
+            'cantidad' => $cantidad,
+        ]);
 
         return redirect('/dashboard')->with('success', 'Consumo registrado');
     }
@@ -141,12 +128,11 @@ Movimiento::create([
     public function alertas()
     {
         $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
-
         $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
 
         return response()->json([
             'stock_bajo' => $stock_bajo,
-            'por_caducar' => $por_caducar
+            'por_caducar' => $por_caducar,
         ]);
     }
-} 
+}
