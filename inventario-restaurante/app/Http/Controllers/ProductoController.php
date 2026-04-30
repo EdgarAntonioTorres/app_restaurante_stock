@@ -28,7 +28,43 @@ class ProductoController extends Controller
             ->orderBy('fecha', 'asc')
             ->get();
 
-        return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar', 'historial', 'consumoDiario'));
+        // ── NUEVO: consumo agrupado por categoría y fecha ───────────────
+        $consumoPorCategoria = Movimiento::where('movimientos.tipo', 'salida')
+            ->where('movimientos.created_at', '>=', now()->subDays(7))
+            ->join('productos', 'movimientos.producto_id', '=', 'productos.id')
+            ->selectRaw('COALESCE(productos.categoria, "Sin Categoría") as categoria, DATE(movimientos.created_at) as fecha, SUM(movimientos.cantidad) as total')
+            ->groupBy('productos.categoria', 'fecha')
+            ->orderBy('fecha', 'asc')
+            ->get();
+
+        // ── NUEVO: top 10 productos más consumidos ──────────────────────
+        $consumoPorProducto = Movimiento::where('movimientos.tipo', 'salida')
+            ->where('movimientos.created_at', '>=', now()->subDays(7))
+            ->join('productos', 'movimientos.producto_id', '=', 'productos.id')
+            ->selectRaw('productos.nombre, productos.unidad, SUM(movimientos.cantidad) as total')
+            ->groupBy('productos.nombre', 'productos.unidad')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $consumoIndividual = Movimiento::where('movimientos.tipo', 'salida')
+            ->where('movimientos.created_at', '>=', now()->subDays(30))
+            ->join('productos', 'movimientos.producto_id', '=', 'productos.id')
+            ->selectRaw('movimientos.producto_id, DATE(movimientos.created_at) as fecha, SUM(movimientos.cantidad) as total')
+            ->groupBy('movimientos.producto_id', 'fecha')
+            ->orderBy('fecha', 'asc')
+            ->get();
+
+        return view('dashboard', compact(
+            'productos',
+            'stock_bajo',
+            'por_caducar',
+            'historial',
+            'consumoDiario',
+            'consumoPorCategoria',
+            'consumoPorProducto',
+            'consumoIndividual'
+        ));
     }
 
     public function create()
@@ -44,7 +80,6 @@ class ProductoController extends Controller
     public function show(Producto $producto)
     {
     }
-
     public function edit(Producto $producto)
     {
     }
@@ -52,14 +87,12 @@ class ProductoController extends Controller
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
-
         $producto->update([
             'nombre' => $request->nombre,
             'categoria' => $request->categoria,
             'unidad' => $request->unidad,
             'stock_minimo' => $request->stock_minimo,
         ]);
-
         return redirect('/dashboard')->with('success', 'Producto actualizado con éxito');
     }
 
@@ -68,7 +101,6 @@ class ProductoController extends Controller
         $producto = Producto::findOrFail($id);
         $producto->lotes()->delete();
         $producto->delete();
-
         return redirect('/dashboard')->with('success', 'Producto eliminado del sistema');
     }
 
@@ -82,7 +114,6 @@ class ProductoController extends Controller
         $producto = Producto::findOrFail($request->producto_id);
         $cantidad = (int) $request->cantidad;
 
-        // ── Validación: no permitir stock negativo ──────────────────────
         if ($cantidad > $producto->stock_actual) {
             return redirect('/dashboard')->with(
                 'error',
@@ -90,7 +121,6 @@ class ProductoController extends Controller
             );
         }
 
-        // ── Consumo FIFO por lotes (del más próximo a caducar) ──────────
         $restante = $cantidad;
         $lotes = Lote::where('producto_id', $producto->id)
             ->orderBy('fecha_caducidad', 'asc')
@@ -99,7 +129,6 @@ class ProductoController extends Controller
         foreach ($lotes as $lote) {
             if ($restante <= 0)
                 break;
-
             if ($lote->cantidad <= $restante) {
                 $restante -= $lote->cantidad;
                 $lote->delete();
@@ -110,14 +139,12 @@ class ProductoController extends Controller
             }
         }
 
-        // ── Actualizar stock del producto ───────────────────────────────
         $producto->stock_actual -= $cantidad;
         $producto->save();
 
-        // ── Registrar movimiento con el usuario autenticado ─────────────
         Movimiento::create([
             'producto_id' => $producto->id,
-            'user_id' => Auth::id(),   // ← guarda quién consumió
+            'user_id' => Auth::id(),
             'tipo' => 'salida',
             'cantidad' => $cantidad,
         ]);
