@@ -344,7 +344,15 @@
                                 </span>
                             </td>
                             <td class="fw-bold">{{ $mov->cantidad }} {{ $mov->producto->unidad }}</td>
-                            <td class="small text-secondary italic">{{ $mov->user->name ?? 'Sistema' }}</td>
+                            <td class="small text-secondary">
+                                {{ $mov->user->name ?? 'Sistema' }}
+                                @if($mov->user)
+                                    <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary ms-1"
+                                        style="font-size: 0.65rem;">
+                                        {{ $mov->user->rol }}
+                                    </span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
