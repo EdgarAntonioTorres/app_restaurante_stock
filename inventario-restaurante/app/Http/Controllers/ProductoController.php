@@ -6,6 +6,7 @@ use App\Models\Producto;
 use Illuminate\Http\Request;
 use App\Models\Lote;
 use App\Models\Movimiento;
+use Illuminate\Support\Facades\Auth;
 
 class ProductoController extends Controller
 {
@@ -14,7 +15,25 @@ class ProductoController extends Controller
      */
     public function index()
     {
-        return Producto::all();
+        $productos = Producto::with('lotes')->get();
+        $stock_bajo = Producto::whereColumn('stock_actual', '<=', 'stock_minimo')->get();
+        $por_caducar = Lote::where('fecha_caducidad', '<=', now()->addDays(3))->get();
+
+        // --- NUEVO: Datos para el Kardex (Historial) ---
+        $historial = Movimiento::with(['producto', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->take(15)
+            ->get();
+
+        // --- NUEVO: Datos para la Gráfica de Consumo (Últimos 7 días) ---
+        $consumoDiario = Movimiento::where('tipo', 'salida')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->selectRaw('DATE(created_at) as fecha, SUM(cantidad) as total')
+            ->groupBy('fecha')
+            ->orderBy('fecha', 'asc')
+            ->get();
+
+        return view('dashboard', compact('productos', 'stock_bajo', 'por_caducar', 'historial', 'consumoDiario'));
     }
 
     /**
@@ -53,17 +72,32 @@ class ProductoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Producto $producto)
+    public function update(Request $request, $id)
     {
-        //
+        $producto = Producto::findOrFail($id);
+        
+        $producto->update([
+            'nombre' => $request->nombre,
+            'categoria' => $request->categoria,
+            'unidad' => $request->unidad,
+            'stock_minimo' => $request->stock_minimo,
+        ]);
+
+        return redirect('/dashboard')->with('success', 'Producto actualizado con éxito');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Producto $producto)
+    public function destroy($id)
     {
-        //
+        $producto = Producto::findOrFail($id);
+
+        // Opcional: Eliminar lotes y movimientos asociados antes de borrar el producto
+        $producto->lotes()->delete();
+        $producto->delete();
+
+        return redirect('/dashboard')->with('success', 'Producto eliminado del sistema');
     }
 
     public function consumir(Request $request)
@@ -92,11 +126,14 @@ class ProductoController extends Controller
         $producto->stock_actual -= $request->cantidad;
         $producto->save();
 
-        Movimiento::create([
-            'producto_id' => $producto->id,
-            'tipo' => 'salida',
-            'cantidad' => $request->cantidad
-        ]);
+        // --- ACTUALIZADO: Se agrega user_id para el Kardex ---
+        // En el método consumir()
+Movimiento::create([
+    'producto_id' => $producto->id,
+    // 'user_id' => Auth::id(),  <-- COMENTA O BORRA ESTA LÍNEA
+    'tipo' => 'salida',
+    'cantidad' => $request->cantidad
+]);
 
         return redirect('/dashboard')->with('success', 'Consumo registrado');
     }
@@ -112,4 +149,4 @@ class ProductoController extends Controller
             'por_caducar' => $por_caducar
         ]);
     }
-}
+} 
