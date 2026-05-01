@@ -46,7 +46,7 @@
         @endif
 
         {{-- ============================================================ --}}
-        {{-- SECCIÓN 1: ALERTAS (Stock crítico + Vencimientos) --}}
+        {{-- SECCIÓN 1: ALERTAS --}}
         {{-- ============================================================ --}}
         <div class="row g-4 mb-4">
             <div class="col-md-6">
@@ -54,16 +54,14 @@
                     <div class="card-header bg-transparent border-danger text-danger fw-light">⚠️ Stock Crítico</div>
                     <div class="card-body d-flex flex-wrap gap-2">
                         @foreach($stock_bajo as $p)
-                            <span
-                                class="badge bg-danger bg-opacity-25 text-danger border border-danger">{{ $p->nombre }}</span>
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">{{ $p->nombre }}</span>
                         @endforeach
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card bg-black border-warning">
-                    <div class="card-header bg-transparent border-warning text-warning fw-light">⏳ Vencimientos Próximos
-                    </div>
+                    <div class="card-header bg-transparent border-warning text-warning fw-light">⏳ Vencimientos Próximos</div>
                     <div class="card-body d-flex flex-wrap gap-2">
                         @foreach($por_caducar->unique('producto_id') as $lote)
                             <span class="badge bg-warning bg-opacity-25 text-warning border border-warning">
@@ -78,7 +76,6 @@
         {{-- ============================================================ --}}
         {{-- SECCIÓN 2: TABLA DE INVENTARIO --}}
         {{-- ============================================================ --}}
-
         <div class="table-responsive mb-5">
             <table class="table table-dark table-striped table-hover align-middle">
                 <thead>
@@ -96,8 +93,7 @@
                             <td>{{ $producto->nombre }}</td>
                             <td>{{ $producto->unidad }}</td>
                             <td>
-                                <span
-                                    class="fw-bold {{ $producto->stock_actual <= $producto->stock_minimo ? 'text-danger' : ($producto->stock_actual <= $producto->stock_minimo * 2 ? 'text-warning' : 'text-success') }}">
+                                <span class="fw-bold {{ $producto->stock_actual <= $producto->stock_minimo ? 'text-danger' : ($producto->stock_actual <= $producto->stock_minimo * 2 ? 'text-warning' : 'text-success') }}">
                                     {{ $producto->stock_actual }}
                                 </span>
                             </td>
@@ -125,8 +121,7 @@
                                 <div class="modal-content bg-dark border-secondary text-light">
                                     <div class="modal-header border-secondary">
                                         <h5 class="modal-title fw-light">Editar {{ $producto->nombre }}</h5>
-                                        <button type="button" class="btn-close btn-close-white"
-                                            data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="/productos/{{ $producto->id }}" method="POST">
                                         @csrf
@@ -160,8 +155,7 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer border-secondary">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Cerrar</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                                             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                                         </div>
                                     </form>
@@ -202,8 +196,7 @@
                             <div class="col-sm-6 col-md-2">
                                 <label class="form-label text-secondary small">Stock mínimo</label>
                                 <input type="number" name="stock_minimo"
-                                    class="form-control bg-dark text-light border-secondary" placeholder="0" min="0"
-                                    required>
+                                    class="form-control bg-dark text-light border-secondary" placeholder="0" min="0" required>
                             </div>
                             <div class="col-md-1">
                                 <button type="submit" class="btn btn-outline-light w-100">Crear</button>
@@ -248,13 +241,14 @@
             </div>
         @endif
 
+        {{-- FORMULARIO CONSUMIR — ahora con campo motivo --}}
         <h2 class="fw-light mb-3">Consumir Producto (Salida)</h2>
         <div class="card bg-black border-secondary mb-5">
             <div class="card-body">
                 <form action="/consumir" method="POST">
                     @csrf
                     <div class="row g-3 align-items-end">
-                        <div class="col-sm-6 col-md-5">
+                        <div class="col-sm-6 col-md-4">
                             <label class="form-label text-secondary small">Seleccionar Producto</label>
                             <select name="producto_id" class="form-select bg-dark text-light border-secondary" required>
                                 @foreach($productos as $producto)
@@ -262,12 +256,20 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-sm-6 col-md-4">
+                        <div class="col-sm-6 col-md-2">
                             <label class="form-label text-secondary small">Cantidad a retirar</label>
                             <input type="number" name="cantidad"
                                 class="form-control bg-dark text-light border-secondary" min="1" required>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-sm-6 col-md-4">
+                            <label class="form-label text-secondary small">Motivo de consumo</label>
+                            <select name="motivo" class="form-select bg-dark text-light border-secondary" required>
+                                <option value="uso_cocina">🍳 Uso en cocina (preparación normal)</option>
+                                <option value="producto_danado">⚠️ Producto dañado al recibir</option>
+                                <option value="producto_vencido">🗓️ Producto vencido</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
                             <button type="submit" class="btn btn-outline-light w-100">Consumir</button>
                         </div>
                     </div>
@@ -276,9 +278,8 @@
         </div>
 
         {{-- ============================================================ --}}
-        {{-- SECCIÓN 4: GRÁFICAS --}}
+        {{-- SECCIÓN 4: GRÁFICAS EXISTENTES --}}
         {{-- ============================================================ --}}
-
         <div class="row g-4 mb-4">
             <div class="col-lg-8">
                 <div class="card bg-black border-secondary h-100">
@@ -290,7 +291,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-lg-4">
                 <div class="card bg-black border-secondary h-100">
                     <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
@@ -303,7 +303,7 @@
             </div>
         </div>
 
-        <div class="row mb-5">
+        <div class="row mb-4">
             <div class="col-12">
                 <div class="card bg-black border-secondary">
                     <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
@@ -316,10 +316,7 @@
             </div>
         </div>
 
-        {{-- ============================================================ --}}
-        {{-- SECCIÓN 4B: CONSUMO POR CATEGORÍA Y POR PRODUCTO --}}
-        {{-- ============================================================ --}}
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="card bg-black border-secondary h-100">
                     <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
@@ -330,7 +327,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-lg-6">
                 <div class="card bg-black border-secondary h-100">
                     <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
@@ -343,21 +339,14 @@
             </div>
         </div>
 
-        {{-- ============================================================ --}}
-        {{-- SECCIÓN 4C: CONSUMO INDIVIDUAL POR PRODUCTO --}}
-        {{-- ============================================================ --}}
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card bg-black border-secondary">
-                    <div
-                        class="card-header bg-transparent border-secondary d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="card-header bg-transparent border-secondary d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <span class="text-secondary small text-uppercase">Historial de Consumo por Producto</span>
-                        <select id="selectorProducto"
-                            class="form-select form-select-sm bg-dark text-light border-secondary"
-                            style="max-width: 260px;">
+                        <select id="selectorProducto" class="form-select form-select-sm bg-dark text-light border-secondary" style="max-width: 260px;">
                             @foreach($productos as $producto)
-                                <option value="{{ $producto->id }}" data-nombre="{{ $producto->nombre }}"
-                                    data-unidad="{{ $producto->unidad }}">
+                                <option value="{{ $producto->id }}" data-nombre="{{ $producto->nombre }}" data-unidad="{{ $producto->unidad }}">
                                     {{ $producto->nombre }}
                                 </option>
                             @endforeach
@@ -374,9 +363,49 @@
         </div>
 
         {{-- ============================================================ --}}
-        {{-- SECCIÓN 5: KARDEX DE MOVIMIENTOS --}}
+        {{-- SECCIÓN 4D: GRÁFICA DE MOTIVOS DE CONSUMO (NUEVA) --}}
         {{-- ============================================================ --}}
+        <div class="row mb-5">
+            <div class="col-lg-6">
+                <div class="card bg-black border-secondary h-100">
+                    <div class="card-header bg-transparent border-secondary text-secondary small text-uppercase">
+                        Motivos de Consumo (Total acumulado)
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <canvas id="chartMotivos" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-flex align-items-center">
+                <div class="w-100">
+                    <div class="mb-3 p-3 rounded border border-secondary bg-black">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span style="width:14px;height:14px;border-radius:3px;background:rgba(32,201,151,0.7);display:inline-block;"></span>
+                            <span class="small text-light fw-semibold">🍳 Uso en cocina</span>
+                        </div>
+                        <p class="text-secondary small mb-0">Retiro normal por parte del cocinero para preparar platillos.</p>
+                    </div>
+                    <div class="mb-3 p-3 rounded border border-secondary bg-black">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span style="width:14px;height:14px;border-radius:3px;background:rgba(255,193,7,0.7);display:inline-block;"></span>
+                            <span class="small text-light fw-semibold">⚠️ Producto dañado al recibir</span>
+                        </div>
+                        <p class="text-secondary small mb-0">Producto que llegó en mal estado y no fue detectado al momento de la compra.</p>
+                    </div>
+                    <div class="p-3 rounded border border-secondary bg-black">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span style="width:14px;height:14px;border-radius:3px;background:rgba(220,53,69,0.7);display:inline-block;"></span>
+                            <span class="small text-light fw-semibold">🗓️ Producto vencido</span>
+                        </div>
+                        <p class="text-secondary small mb-0">Producto que llegó a su fecha de caducidad sin ser utilizado.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        {{-- ============================================================ --}}
+        {{-- SECCIÓN 5: KARDEX --}}
+        {{-- ============================================================ --}}
         <h2 class="fw-light mb-3 text-secondary">Kardex de Movimientos</h2>
         <div class="table-responsive mb-5 shadow-sm">
             <table class="table table-dark table-sm table-hover border-secondary">
@@ -386,6 +415,7 @@
                         <th class="fw-normal py-2">Producto</th>
                         <th class="fw-normal py-2 text-center">Tipo</th>
                         <th class="fw-normal py-2">Cantidad</th>
+                        <th class="fw-normal py-2">Motivo</th>
                         <th class="fw-normal py-2">Usuario</th>
                     </tr>
                 </thead>
@@ -395,17 +425,26 @@
                             <td class="small text-secondary px-3">{{ $mov->created_at->format('d/m/Y H:i') }}</td>
                             <td>{{ $mov->producto->nombre }}</td>
                             <td class="text-center">
-                                <span
-                                    class="badge {{ $mov->tipo == 'entrada' ? 'bg-success' : 'bg-info' }} bg-opacity-25 {{ $mov->tipo == 'entrada' ? 'text-success' : 'text-info' }} border {{ $mov->tipo == 'entrada' ? 'border-success' : 'border-info' }} px-2">
+                                <span class="badge {{ $mov->tipo == 'entrada' ? 'bg-success' : 'bg-info' }} bg-opacity-25 {{ $mov->tipo == 'entrada' ? 'text-success' : 'text-info' }} border {{ $mov->tipo == 'entrada' ? 'border-success' : 'border-info' }} px-2">
                                     {{ strtoupper($mov->tipo) }}
                                 </span>
                             </td>
                             <td class="fw-bold">{{ $mov->cantidad }} {{ $mov->producto->unidad }}</td>
+                            <td class="small">
+                                @if($mov->motivo === 'uso_cocina')
+                                    <span class="text-success">🍳 Uso en cocina</span>
+                                @elseif($mov->motivo === 'producto_danado')
+                                    <span class="text-warning">⚠️ Dañado al recibir</span>
+                                @elseif($mov->motivo === 'producto_vencido')
+                                    <span class="text-danger">🗓️ Vencido</span>
+                                @else
+                                    <span class="text-secondary">—</span>
+                                @endif
+                            </td>
                             <td class="small text-secondary">
                                 {{ $mov->user->name ?? 'Sistema' }}
                                 @if($mov->user)
-                                    <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary ms-1"
-                                        style="font-size: 0.65rem;">
+                                    <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary ms-1" style="font-size: 0.65rem;">
                                         {{ $mov->user->rol }}
                                     </span>
                                 @endif
@@ -491,7 +530,7 @@
                 options: commonOptions
             });
 
-            // Gráfica de Tendencia (Line)
+            // Gráfica Tendencia (Line)
             const datosConsumo = @json($consumoDiario);
             new Chart(document.getElementById('chartConsumo'), {
                 type: 'line',
@@ -517,9 +556,8 @@
                 }
             });
 
-            // ── Consumo por Categoría (Líneas múltiples) ──────────────────────
+            // Consumo por Categoría (Líneas múltiples)
             const rawCategoria = @json($consumoPorCategoria);
-
             const fechasSet = [...new Set(rawCategoria.map(d => d.fecha))].sort();
             const categoriasSet = [...new Set(rawCategoria.map(d => d.categoria))];
 
@@ -561,9 +599,8 @@
                 }
             });
 
-            // ── Top 10 Productos más Consumidos (Barras horizontales) ─────────
+            // Top 10 Productos (Barras horizontales)
             const rawProducto = @json($consumoPorProducto);
-
             new Chart(document.getElementById('chartConsumoProducto'), {
                 type: 'bar',
                 data: {
@@ -588,9 +625,8 @@
                 }
             });
 
-            // ── Consumo individual por producto (últimos 30 días) ─────────────
+            // Consumo individual por producto
             const todosMovimientos = @json($consumoIndividual);
-
             const ctxIndividual = document.getElementById('chartProductoIndividual');
             let chartIndividual = null;
 
@@ -605,19 +641,15 @@
                 }
 
                 sinDatos.classList.add('d-none');
-
-                const labels = datos.map(d => d.fecha);
-                const valores = datos.map(d => d.total);
-
                 if (chartIndividual) chartIndividual.destroy();
 
                 chartIndividual = new Chart(ctxIndividual, {
                     type: 'bar',
                     data: {
-                        labels,
+                        labels: datos.map(d => d.fecha),
                         datasets: [{
                             label: `${nombre} (${unidad})`,
-                            data: valores,
+                            data: datos.map(d => d.total),
                             backgroundColor: 'rgba(13,110,253,0.45)',
                             borderColor: '#0d6efd',
                             borderWidth: 1,
@@ -635,17 +667,60 @@
             }
 
             const selector = document.getElementById('selectorProducto');
-
-            // Render inicial con el primer producto
             const primerOpt = selector.options[0];
             if (primerOpt) {
                 renderChartIndividual(primerOpt.value, primerOpt.dataset.nombre, primerOpt.dataset.unidad);
             }
-
-            // Actualizar al cambiar selección
             selector.addEventListener('change', function () {
                 const opt = this.options[this.selectedIndex];
                 renderChartIndividual(opt.value, opt.dataset.nombre, opt.dataset.unidad);
+            });
+
+            // ── GRÁFICA DE MOTIVOS (Doughnut — NUEVA) ────────────────────────
+            const motivoData = @json($motivoData);
+
+            new Chart(document.getElementById('chartMotivos'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['🍳 Uso en cocina', '⚠️ Dañado al recibir', '🗓️ Vencido'],
+                    datasets: [{
+                        data: [
+                            motivoData.uso_cocina,
+                            motivoData.producto_danado,
+                            motivoData.producto_vencido
+                        ],
+                        backgroundColor: [
+                            'rgba(32, 201, 151, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(220, 53, 69, 0.7)'
+                        ],
+                        borderColor: [
+                            '#20c997',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#adb5bd', font: { size: 12 }, padding: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const val = ctx.parsed;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${val} unidades (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
         });
     </script>
